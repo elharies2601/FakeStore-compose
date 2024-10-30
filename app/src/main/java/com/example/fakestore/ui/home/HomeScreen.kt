@@ -1,6 +1,5 @@
 package com.example.fakestore.ui.home
 
-import android.inputmethodservice.Keyboard.Row
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -40,14 +38,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,11 +61,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.fakestore.component.EmptyStateView
+import com.example.fakestore.component.ErrorView
 import com.example.fakestore.component.RoundedAliasIcon
 import com.example.fakestore.component.ShimmeringEffect
 import com.example.fakestore.data.model.UiState
@@ -103,9 +101,7 @@ fun HomeScreen(
     val user by viewModel.user.collectAsStateWithLifecycle()
 
     LaunchedEffect(key1 = Unit) {
-        viewModel.fetchCategories()
-        viewModel.checkCart()
-        viewModel.fetchUser()
+        doCallFirst(viewModel)
     }
 
     LaunchedEffect(key1 = selectedCategory) {
@@ -130,8 +126,18 @@ fun HomeScreen(
         onLogout = {
             viewModel.doLogout()
             navHostController.navigateAndClean(FakeStoreRoute.Login.route)
+        },
+        onRetryError = {
+            doCallFirst(viewModel)
+            viewModel.fetchProducts(selectedCategory)
         }
     )
+}
+
+private fun doCallFirst(viewModel: HomeViewModel) {
+    viewModel.fetchCategories()
+    viewModel.checkCart()
+    viewModel.fetchUser()
 }
 
 @Composable
@@ -145,7 +151,8 @@ fun HomeContent(
     onSelectFilter: (String) -> Unit = {},
     onClickCart: () -> Unit = {},
     onClickDetail: (Int) -> Unit = {},
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    onRetryError: () -> Unit = {}
 ) {
     var showBottomSheet by remember { mutableStateOf(false) }
 
@@ -154,22 +161,35 @@ fun HomeContent(
             showBottomSheet = true
         }
     }) {
-        Box(
+        ConstraintLayout(
             modifier = modifier
                 .padding(it)
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            ListProducts(
-                modifier = Modifier.align(Alignment.Center),
-                uiState = uiStateProducts,
-                onClickDetail
-            )
+            val (listProducts, categoriesFilter) = createRefs()
+
             CategoriesFilter(
-                modifier = Modifier.align(Alignment.TopStart),
+                modifier = Modifier.constrainAs(categoriesFilter) {
+                    top.linkTo(parent.top)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                },
                 uiState = uiStateCategories,
                 selectedCategory = selectedCategory,
                 onSelectFilter = onSelectFilter
+            )
+
+            ListProducts(
+                modifier = Modifier.constrainAs(listProducts) {
+                    top.linkTo(categoriesFilter.bottom)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                    bottom.linkTo(parent.bottom)
+                }.padding(top = 16.dp),
+                uiState = uiStateProducts,
+                onClickProduct = onClickDetail,
+                onRetryError = onRetryError
             )
         }
     }
@@ -188,21 +208,28 @@ fun HomeContent(
 private fun ListProducts(
     modifier: Modifier = Modifier,
     uiState: UiState<MutableList<ProductRes>> = UiState.Idle,
-    onClickProduct: (Int) -> Unit = {}
+    onClickProduct: (Int) -> Unit = {},
+    onRetryError: () -> Unit = {}
 ) {
     when (uiState) {
         is UiState.Loading -> LoadingProduct(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(top = 72.dp)
+                .padding(top = 8.dp)
                 .testTag("loading_products")
         )
+
+        is UiState.Failed -> {
+            ErrorView(message = uiState.message) {
+                onRetryError()
+            }
+        }
 
         is UiState.Success -> {
             if (uiState.result.isNotEmpty()) {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
-                    modifier = modifier.padding(top = 72.dp),
+                    modifier = modifier.padding(top = 8.dp),
                     contentPadding = PaddingValues(16.dp)
                 ) {
                     items(uiState.result, key = { it.id }) { product ->
@@ -211,7 +238,7 @@ private fun ListProducts(
                 }
             } else {
                 Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    EmptyStateView("No Product Found")
+                    EmptyStateView(message = "No Product Found")
                 }
             }
         }
@@ -349,7 +376,7 @@ private fun CategoriesFilter(
                     FilterChip(
                         selected = isSelected,
                         onClick = { onSelectFilter(category) },
-                        label = { Text(category) }
+                        label = { Text(category.capitalize()) }
                     )
                 }
             }

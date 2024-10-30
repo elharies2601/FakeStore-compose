@@ -210,7 +210,7 @@ private fun BoxSummary(
                 is SummaryUiState.Success -> {
                     if (uiState.items.isEmpty()) {
                         item {
-                            EmptyStateView("No Items Found")
+                            EmptyStateView(message = "No Items Found")
                         }
                     } else {
                         items(items = uiState.items, key = { it.id }) { summary ->

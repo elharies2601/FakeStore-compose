@@ -8,6 +8,7 @@ import androidx.compose.ui.test.performClick
 import com.example.fakestore.data.model.UiState
 import com.example.fakestore.data.model.product.ProductRes
 import com.example.fakestore.data.model.user.UserRes
+import com.example.fakestore.util.capitalize
 import com.example.fakestore.util.toFormat
 import org.junit.Rule
 import org.junit.Test

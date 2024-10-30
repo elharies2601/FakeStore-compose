@@ -63,6 +63,7 @@ dependencies {
     implementation(libs.androidx.hilt.nav.compose)
     implementation(libs.androidx.palette.ktx)
     implementation(libs.androidx.datastore.core.android)
+    implementation(libs.androidx.constraintlayout)
     kapt(libs.hilt.compiler)
 
     implementation(libs.retrofit.core)

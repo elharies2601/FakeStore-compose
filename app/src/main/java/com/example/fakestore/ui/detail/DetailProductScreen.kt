@@ -144,7 +144,11 @@ fun DetailProductContent(
                 .background(MaterialTheme.colorScheme.background)
         ) {
             when (uiStateDetail) {
-                is UiState.Loading -> {}
+                is UiState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(modifier = Modifier.size(100.dp))
+                    }
+                }
                 is UiState.Success -> {
                     BannerProduct(product = uiStateDetail.result)
                     HeaderDetail(product = uiStateDetail.result)

@@ -22,6 +22,7 @@ roomVersion = "2.6.1"
 datastoreCoreAndroid = "1.1.1"
 mockkVersion = "1.12.0"
 coroutineVersion = "1.6.0"
+constraintlayout = "1.0.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -63,6 +64,7 @@ androidx-datastore-core-android = { group = "androidx.datastore", name = "datast
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockkVersion"}
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockkVersion"}
 coroutine-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutineVersion" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout-compose", version.ref = "constraintlayout" }
 
 
 [plugins]

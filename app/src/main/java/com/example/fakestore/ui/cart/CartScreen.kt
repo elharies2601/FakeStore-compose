@@ -1,7 +1,10 @@
 package com.example.fakestore.ui.cart
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -10,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,7 +40,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -141,10 +147,10 @@ fun CartContent(
                     is CartUiState.Empty -> {
                         item {
                             Box(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().fillMaxHeight(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                EmptyStateView("Cart is empty")
+                                EmptyStateView(modifier = Modifier.fillMaxHeight(), message = "Cart is empty")
                             }
                         }
                     }
@@ -157,7 +163,7 @@ fun CartContent(
 
                     is CartUiState.Success -> {
                         items(items = cartUiState.items, key = { cart -> cart.id }) { cart ->
-                            ItemCart(cart = cart) { isIncrement ->
+                            ItemCart(modifier = Modifier.animateItem(), cart = cart) { isIncrement ->
                                 onQuantityChange(
                                     cart.id,
                                     isIncrement
@@ -311,6 +317,7 @@ private fun BoxBottom(
             }
             Button(
                 onClick = onCheckout,
+                enabled = total > 0.0,
                 modifier = Modifier
                     .width(120.dp)
                     .height(48.dp),
